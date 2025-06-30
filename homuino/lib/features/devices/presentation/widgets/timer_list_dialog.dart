@@ -3,20 +3,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homuino/features/devices/data/device_repository.dart';
 import 'package:homuino/features/devices/domain/device.dart';
 
-class TimerListDialog extends ConsumerWidget {
+class TimerListDialog extends ConsumerStatefulWidget {
   final Device device;
   final String userId;
+  final String deviceId;
 
   const TimerListDialog({
     Key? key,
     required this.device,
     required this.userId,
+    required this.deviceId,
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final timers = device.timers ?? {};
+  _TimerListDialogState createState() => _TimerListDialogState();
+}
 
+class _TimerListDialogState extends ConsumerState<TimerListDialog> {
+  late Map<String, dynamic> timers;
+
+  @override
+  void initState() {
+    super.initState();
+    timers = Map<String, dynamic>.from(widget.device.timers ?? {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Device Timers'),
       content: timers.isEmpty
@@ -36,7 +49,9 @@ class TimerListDialog extends ConsumerWidget {
                   subtitle: Text(
                     entry.value['enabled'] ? 'Enabled' : 'Disabled',
                     style: TextStyle(
-                      color: entry.value['enabled'] ? Colors.green : Colors.grey,
+                      color: entry.value['enabled']
+                          ? Colors.green
+                          : Colors.grey,
                     ),
                   ),
                   trailing: Row(
@@ -50,15 +65,19 @@ class TimerListDialog extends ConsumerWidget {
                             ...entry.value,
                             'enabled': value,
                           };
-
                           try {
                             await ref.read(deviceRepositoryProvider).updateDevice(
-                              userId,
-                              device.copyWith(timers: updatedTimers),
+                              widget.userId,
+                              widget.device.copyWith(timers: updatedTimers),
                             );
+                            setState(() {
+                              timers = updatedTimers;
+                            });
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Failed to update timer: ${e.toString()}')),
+                              SnackBar(
+                                  content: Text(
+                                      'Failed to update timer: ${e.toString()}')),
                             );
                           }
                         },
@@ -66,17 +85,34 @@ class TimerListDialog extends ConsumerWidget {
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
                         onPressed: () async {
-                          final updatedTimers = Map<String, dynamic>.from(timers);
-                          updatedTimers.remove(entry.key);
-
                           try {
+                            final updatedTimers =
+                            Map<String, dynamic>.from(timers);
+                            updatedTimers.remove(entry.key);
+
                             await ref.read(deviceRepositoryProvider).updateDevice(
-                              userId,
-                              device.copyWith(timers: updatedTimers),
+                              widget.userId,
+                              widget.device.copyWith(timers: updatedTimers),
+                            );
+
+                            if (widget.deviceId.isNotEmpty) {
+                              await ref
+                                  .read(deviceRepositoryProvider)
+                                  .deleteTimer(widget.deviceId, entry.key);
+                            }
+
+                            setState(() {
+                              timers = updatedTimers;
+                            });
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Timer deleted')),
                             );
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Failed to delete timer: ${e.toString()}')),
+                              SnackBar(
+                                  content: Text(
+                                      'Failed to delete timer: ${e.toString()}')),
                             );
                           }
                         },

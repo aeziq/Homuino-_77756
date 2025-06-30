@@ -5,7 +5,7 @@ import 'package:homuino/core/loading_indicator.dart';
 import '../../devices/data/device_repository.dart';
 import '../../devices/domain/device.dart';
 import '../presentation/widgets/device_card.dart';
-import 'add_device_screen.dart'; // We'll create this new screen
+import 'add_device_screen.dart';
 import '../presentation/widgets/timer_dialog.dart';
 import '../presentation/widgets/timer_list_dialog.dart';
 
@@ -74,7 +74,10 @@ class _DeviceManagementScreenState extends ConsumerState<DeviceManagementScreen>
             return const Center(child: LoadingIndicator());
           }
 
-          final devices = snapshot.data!;
+          // Filter devices to only show ONLINE or OFFLINE status
+          final devices = snapshot.data!
+              .where((device) => device.status == 'ONLINE' || device.status == 'OFFLINE')
+              .toList();
 
           if (devices.isEmpty) {
             return Center(
@@ -224,6 +227,7 @@ class _DeviceManagementScreenState extends ConsumerState<DeviceManagementScreen>
                         builder: (context) => TimerListDialog(
                           device: device,
                           userId: FirebaseAuth.instance.currentUser!.uid,
+                          deviceId: device.deviceId,
                         ),
                       );
                     },

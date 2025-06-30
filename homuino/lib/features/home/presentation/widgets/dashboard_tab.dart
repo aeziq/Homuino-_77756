@@ -32,7 +32,10 @@ class DashboardTab extends ConsumerWidget {
         }
 
         final devices = snapshot.data!;
-        final favoriteDevices = devices.where((device) => device.isFavorite).toList();
+        // Filter devices to only show ONLINE or OFFLINE status
+        final filteredDevices = devices.where((device) =>
+        device.status == 'ONLINE' || device.status == 'OFFLINE').toList();
+        final favoriteDevices = filteredDevices.where((device) => device.isFavorite).toList();
 
         return CustomScrollView(
           slivers: [

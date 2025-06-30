@@ -114,4 +114,15 @@ class DeviceRepository {
       throw DatabaseException.writeFailed('devices/$deviceId');
     }
   }
+
+  Future<void> deleteTimer(String deviceId, String timerId) async {
+    final db = FirebaseDatabase.instance.ref();
+    await db
+        .child('devices')
+        .child(deviceId)
+        .child('timers')
+        .child(timerId)
+        .remove();
+  }
 }
+

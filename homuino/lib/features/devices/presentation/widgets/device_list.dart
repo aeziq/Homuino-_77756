@@ -103,14 +103,18 @@ class DeviceList extends ConsumerWidget {
   }
 
   Widget _buildDeviceList(BuildContext context, WidgetRef ref, String userId, List<Device> devices) {
+    // Filter devices to only show ONLINE or OFFLINE status
+    final filteredDevices = devices.where((device) =>
+    device.status == 'ONLINE' || device.status == 'OFFLINE').toList();
+
     return RefreshIndicator(
       onRefresh: () async => ref.refresh(deviceRepositoryProvider),
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
-        itemCount: devices.length,
+        itemCount: filteredDevices.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
-          final device = devices[index];
+          final device = filteredDevices[index];
           return DeviceCard(
             device: device,
             onTap: () => _navigateToDeviceDetails(context, device),
